@@ -34,6 +34,9 @@
 .guide-card:hover,.guide-card:focus-visible{border-color:#b18a00;box-shadow:0 8px 20px rgba(0,0,0,.1)}
 .empty-results button{border-color:#050505;background:#050505;color:var(--orange)}
 
+/* Project attribution */
+.creator-line{display:block;color:#f4d86f;font-weight:800;margin-top:8px}
+
 /* Multiple official destinations within a single instruction step */
 .step-links{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:12px}.step-links .official-link{margin-top:0}
 
