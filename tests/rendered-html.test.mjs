@@ -8,6 +8,18 @@ test("resets the window scroll position when the selected guide changes", async 
   assert.match(source, /\}, \[activeId\]\);/);
 });
 
+test("provides a Formspree-backed support form without the print action", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /https:\/\/formspree\.io\/f\/mgawbllz/);
+  assert.match(source, /Feedback or Request for B Co Soldier Guide/);
+  assert.match(source, /Submit feedback/);
+  assert.match(source, /Request a guide or feature/);
+  assert.match(source, /name="request_subject"/);
+  assert.match(source, /name="details"/);
+  assert.match(source, /name="submitted_by"/);
+  assert.doesNotMatch(source, /window\.print/);
+});
+
 test("renders the Soldier guide library", async () => {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);

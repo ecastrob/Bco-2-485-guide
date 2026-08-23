@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Guide = {
   id: string; title: string; section: string; summary: string; time: string; updated: string;
@@ -402,6 +402,14 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [supportMenuOpen, setSupportMenuOpen] = useState(false);
+  const [supportType, setSupportType] = useState<"feedback" | "request" | null>(null);
+  const [supportSubject, setSupportSubject] = useState("");
+  const [supportDetails, setSupportDetails] = useState("");
+  const [submittedBy, setSubmittedBy] = useState("");
+  const [supportStatus, setSupportStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const supportMenuRef = useRef<HTMLDivElement>(null);
+  const supportSubjectRef = useRef<HTMLInputElement>(null);
   const active = activeId ? guides.find((guide) => guide.id === activeId) ?? null : null;
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -418,11 +426,65 @@ export default function Home() {
   const selectGuide = (id: string) => { setActiveId(id); setMenuOpen(false); const section = guides.find((guide) => guide.id === id)?.section; if (section && !openSections.includes(section)) setOpenSections((current) => [...current, section]); };
   const selectAllGuides = () => { setActiveId(null); setQuery(""); setOpenSections(sections.map((section) => section.id)); setMenuOpen(false); };
   const toggleSection = (id: string) => setOpenSections((current) => current.includes(id) ? current.filter((section) => section !== id) : [...current, id]);
+  const openSupport = (type: "feedback" | "request") => {
+    setSupportType(type);
+    setSupportMenuOpen(false);
+    setSupportSubject("");
+    setSupportDetails("");
+    setSubmittedBy("");
+    setSupportStatus("idle");
+  };
+  const closeSupport = () => {
+    if (supportStatus === "submitting") return;
+    setSupportType(null);
+    setSupportStatus("idle");
+  };
+  const submitSupport = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSupportStatus("submitting");
+    const formData = new FormData(event.currentTarget);
+    formData.set("request_type", supportType === "feedback" ? "Feedback" : "Guide or feature request");
+    formData.set("source_page", active?.title ?? "All Guides");
+
+    try {
+      const response = await fetch("https://formspree.io/f/mgawbllz", {
+        method: "POST",
+        body: formData,
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error("Submission failed");
+      setSupportStatus("success");
+      setSupportSubject("");
+      setSupportDetails("");
+      setSubmittedBy("");
+    } catch {
+      setSupportStatus("error");
+    }
+  };
   useEffect(() => {
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (supportType && supportStatus !== "submitting") setSupportType(null);
+      else if (supportMenuOpen) setSupportMenuOpen(false);
+      else setMenuOpen(false);
+    };
+    const closeSupportMenu = (event: PointerEvent) => {
+      if (supportMenuRef.current && !supportMenuRef.current.contains(event.target as Node)) setSupportMenuOpen(false);
+    };
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, []);
+    window.addEventListener("pointerdown", closeSupportMenu);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("pointerdown", closeSupportMenu);
+    };
+  }, [supportMenuOpen, supportStatus, supportType]);
+  useEffect(() => {
+    if (!supportType) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    supportSubjectRef.current?.focus();
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [supportType]);
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [activeId]);
@@ -449,7 +511,7 @@ export default function Home() {
     </aside>
 
     <section className="article-shell" id="main-content" tabIndex={-1}>
-      <header className="article-header"><button className="mobile-menu" onClick={() => { setSidebarCollapsed(false); setMenuOpen(true); }} aria-label="Open guide menu" aria-expanded={menuOpen}>☰</button><div className="breadcrumbs"><span>{active ? sections.find((section) => section.id === active.section)?.title : "Guide Library"}</span><b>/</b><strong>{active?.title ?? "All Guides"}</strong></div><div className="article-actions">{active ? <><span className={`status-pill status-${active.status}`}>{statusDetails[active.status].label}</span>{active.updated !== "Pending" && <span className="checked-date">Checked {active.updated}</span>}</> : <span>{guides.length} guides · {sections.length} sections</span>}{active && <button onClick={() => window.print()} aria-label={`Print ${active.title}`}>▣ Print</button>}</div></header>
+      <header className="article-header"><button className="mobile-menu" onClick={() => { setSidebarCollapsed(false); setMenuOpen(true); }} aria-label="Open guide menu" aria-expanded={menuOpen}>☰</button><div className="breadcrumbs"><span>{active ? sections.find((section) => section.id === active.section)?.title : "Guide Library"}</span><b>/</b><strong>{active?.title ?? "All Guides"}</strong></div><div className="article-actions">{active ? <><span className={`status-pill status-${active.status}`}>{statusDetails[active.status].label}</span>{active.updated !== "Pending" && <span className="checked-date">Checked {active.updated}</span>}</> : <span>{guides.length} guides · {sections.length} sections</span>}<div className="support-menu" ref={supportMenuRef}><button className="support-button" onClick={() => setSupportMenuOpen((current) => !current)} aria-expanded={supportMenuOpen} aria-haspopup="menu"><span aria-hidden="true">?</span> Support <b aria-hidden="true">⌄</b></button>{supportMenuOpen && <div className="support-dropdown" role="menu" aria-label="Support options"><button role="menuitem" onClick={() => openSupport("feedback")}><strong>Submit feedback</strong><small>Tell me what could be clearer or better.</small></button><button role="menuitem" onClick={() => openSupport("request")}><strong>Request a guide or feature</strong><small>Suggest a new topic or site improvement.</small></button></div>}</div></div></header>
       {active ? <article className="article-content">
           <div className="article-main">
             <button className="back-to-library" onClick={selectAllGuides}>← All guides</button>
@@ -459,21 +521,22 @@ export default function Home() {
             <section className="steps" id="steps">{active.steps.map((step, index) => <div className="step" key={step.title}><div className="step-number">{index + 1}</div><div className="step-copy"><h2>{step.title}</h2><p>{step.text}</p>{(step.links ?? (step.link ? [step.link] : [])).length > 0 && <div className="step-links">{(step.links ?? (step.link ? [step.link] : [])).map((link) => <a className="official-link" key={link.label} href={link.href} target="_blank" rel="noreferrer">↗ {link.label}</a>)}</div>}</div>{step.expect ? <div className="step-expect"><strong>WHAT YOU SHOULD SEE</strong><span>{step.expect}</span></div> : <div className="screen-placeholder" aria-label={`Visual pending for step ${index + 1}`}><span>VISUAL PENDING</span><i></i><i></i><i></i></div>}</div>)}</section>
             <section className="problems" id="problems"><div className="problem-heading"><span>!</span><h2>Common problems</h2></div><ul>{active.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></section>
             <section className="official-sources" id="sources"><h2>Official resources</h2>{active.official.length ? <div>{active.official.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span>↗</span></a>)}</div> : <p>Official sources have not yet been attached to this draft. Use current Army and local command guidance before completing the task.</p>}{active.helpful?.length ? <div className="helpful-sources"><h3>Additional help — nonofficial</h3><p>These independent sites can help with troubleshooting, but Army and Microsoft sources take precedence.</p><div>{active.helpful.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span>↗</span></a>)}</div></div> : null}{active.legacy?.length ? <div className="legacy-sources"><h3>Legacy training files</h3><p>These older files are retained for writing and leader-development concepts. They are not current policy; outdated fitness references, links, screenshots, and procedures remain inside them.</p><div>{active.legacy.map((resource) => <a key={resource.label} href={resource.href} download><strong>{resource.label}<span>↓</span></strong><small>{resource.note}</small></a>)}</div></div> : null}</section>
-            <footer className="article-footer"><strong>B Co 2-485 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or B Co 2-485. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers and NCOs. This site does not collect or store information.</small></footer>
+            <footer className="article-footer"><strong>B Co 2-485 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or B Co 2-485. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers and NCOs. No login is required. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>
           </div>
           <aside className="on-page"><strong>ON THIS PAGE</strong><a href="#before">Before you begin</a><a href="#steps">Instructions</a><a href="#problems">Common problems</a><a href="#sources">Sources</a><button onClick={selectAllGuides}>Browse all guides →</button></aside>
         </article> : <article className="library-page">
           <div className="library-intro"><span className="article-eyebrow">GUIDE LIBRARY</span><h1>All Guides</h1><p>Find the task you need, follow the steps, and use the official resource links when provided.</p><div className="reference-banner"><span>i</span><div><strong>Independent project—not an official Army or unit publication</strong><small>Created by an NCO for Reserve Soldiers and NCOs. Verify requirements against current official sources.</small></div></div></div>
           <label className="library-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by task, system, or topic" aria-label="Search the guide library" />{query && <button onClick={() => setQuery("")} aria-label="Clear search">Clear</button>}</label>
-          <div className="library-stats"><div><strong>{filtered.length}</strong><span>{query ? "matching guides" : "available guides"}</span></div><div><strong>{guides.filter((guide) => guide.status === "source-verified").length}</strong><span>source-verified guides</span></div><div><strong>No login</strong><span>no information stored</span></div></div>
+          <div className="library-stats"><div><strong>{filtered.length}</strong><span>{query ? "matching guides" : "available guides"}</span></div><div><strong>{guides.filter((guide) => guide.status === "source-verified").length}</strong><span>source-verified guides</span></div><div><strong>No login</strong><span>feedback is optional</span></div></div>
           <div className="guide-groups">{sections.map((section) => {
             const children = filtered.filter((guide) => guide.section === section.id);
             if (!children.length) return null;
             return <section className="guide-group" key={section.id}><div className="group-heading"><span>{section.icon}</span><div><h2>{section.title}</h2><small>{children.length} {children.length === 1 ? "guide" : "guides"}</small></div></div><div className="guide-cards">{children.map((guide) => <button className="guide-card" key={guide.id} onClick={() => selectGuide(guide.id)}><div><span className={`status-pill card-status status-${guide.status}`}>{statusDetails[guide.status].short}</span><h3>{guide.title}</h3><p>{guide.summary}</p></div><footer><span>{guide.time}</span>{guide.updated !== "Pending" && <span>Checked {guide.updated}</span>}<b>Open guide →</b></footer></button>)}</div></section>;
           })}</div>
           {!filtered.length && <div className="empty-results"><strong>No guides match “{query}”</strong><p>Try a system name such as AVD, IPPS-A, DTS, PDF, or NCOER.</p><button onClick={() => setQuery("")}>Clear search</button></div>}
-          <footer className="article-footer library-footer"><strong>B Co 2-485 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or B Co 2-485. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers and NCOs. This site does not collect or store information.</small></footer>
+          <footer className="article-footer library-footer"><strong>B Co 2-485 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or B Co 2-485. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers and NCOs. No login is required. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>
         </article>}
     </section>
+    {supportType && <div className="support-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSupport(); }}><section className="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-dialog-title"><button className="support-close" type="button" onClick={closeSupport} aria-label="Close support form">×</button><div className="support-modal-content">{supportStatus === "success" ? <div className="support-success" role="status"><span aria-hidden="true">✓</span><h2 id="support-dialog-title">Submission received</h2><p>Thank you. Your {supportType === "feedback" ? "feedback" : "request"} was sent successfully.</p><button type="button" onClick={closeSupport}>Close</button></div> : <><span className="support-eyebrow">SUPPORT</span><h2 id="support-dialog-title">{supportType === "feedback" ? "Submit feedback" : "Request a guide or feature"}</h2><p className="support-intro">Help improve the Soldier Guide. Do not submit PII, CUI, medical, financial, or operationally sensitive information.</p><form onSubmit={submitSupport}><input type="hidden" name="subject" value="Feedback or Request for B Co Soldier Guide" /><input className="support-honeypot" type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" /><label>Subject<input ref={supportSubjectRef} type="text" name="request_subject" value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} maxLength={120} required placeholder={supportType === "feedback" ? "What is your feedback about?" : "What would you like added?"} /></label><label>Details<textarea name="details" value={supportDetails} onChange={(event) => setSupportDetails(event.target.value)} maxLength={2500} required rows={7} placeholder="Describe your feedback or request. Include the guide name or task when applicable." /></label><label>Submitted by<input type="text" name="submitted_by" value={submittedBy} onChange={(event) => setSubmittedBy(event.target.value)} maxLength={80} required placeholder="Name or identifier" /></label>{supportStatus === "error" && <p className="support-error" role="alert">The submission could not be sent. Check your connection and try again.</p>}<div className="support-form-actions"><button className="support-cancel" type="button" onClick={closeSupport} disabled={supportStatus === "submitting"}>Cancel</button><button className="support-submit" type="submit" disabled={supportStatus === "submitting"}>{supportStatus === "submitting" ? "Sending…" : "Submit"}</button></div></form></>}</div></section></div>}
   </main>;
 }
