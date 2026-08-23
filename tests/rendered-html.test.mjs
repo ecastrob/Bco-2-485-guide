@@ -47,6 +47,9 @@ test("renders the Soldier guide library", async () => {
   assert.match(html, />Start or recertify BAH \(DA Form 5960\)</i);
   assert.match(html, />Complete a developmental counseling</i);
   assert.match(html, /Skip to guide content/i);
+  assert.match(html, /Independent project—not an official Army or unit publication/i);
+  assert.match(html, /Created by an NCO for Reserve Soldiers and NCOs/i);
+  assert.match(html, /not affiliated with, endorsed by, or an official publication/i);
   assert.doesNotMatch(html, /Draft — pending verification/i);
   assert.doesNotMatch(html, /updated:\s*["']Pending["']/i);
 });
