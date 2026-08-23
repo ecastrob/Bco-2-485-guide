@@ -32,6 +32,7 @@ test("uses Home as the default landing page without an All Guides directory", as
 test("retains the core MVP guide coverage", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   for (const title of [
+    "Request, transfer, or maintain ARNet access",
     "Access and navigate IPPS-A Self-Service",
     "Submit and track an IPPS-A personnel action",
     "Start and complete your NCOER Support Form — Rated NCO",
@@ -43,6 +44,16 @@ test("retains the core MVP guide coverage", async () => {
     "Start or recertify BAH (DA Form 5960)",
     "Complete a developmental counseling",
   ]) assert.match(source, new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+});
+
+test("uses the current AESMP and AVS workflow for ARNet access", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /Request, transfer, or maintain ARNet access/);
+  assert.match(source, /New Access Request in AESMP/);
+  assert.match(source, /AVS replaced the routine manual DD Form 2875 routing process/);
+  assert.match(source, /ATCTS was retired in 2025/);
+  assert.doesNotMatch(source, /g6-request-arnet-account-aug-2023\.pdf/);
+  assert.doesNotMatch(source, /Burnett, Stevyn|Jenny Iglesias|2nd Battalion, 485th Regiment/);
 });
 
 test("renders the Soldier guide Home page", async () => {
@@ -76,6 +87,7 @@ test("renders the Soldier guide Home page", async () => {
   assert.match(html, /Welcome to the Delta Rays 3-323 Soldier Guide/i);
   assert.match(html, /Search by task, system, or topic/i);
   assert.match(html, />Set up and access Army AVD</i);
+  assert.match(html, />Request, transfer, or maintain ARNet access</i);
   assert.match(html, /Skip to guide content/i);
   assert.match(html, /Independent project—not an official Army or unit publication/i);
   assert.match(html, /Created by an NCO for Reserve Soldiers\./i);

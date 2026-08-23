@@ -13,6 +13,7 @@ test("exports a GitHub Pages-ready static site", async () => {
   assert.doesNotMatch(html, />All Guides</i);
   assert.doesNotMatch(html, /B Co 2-485|B Co Soldier Guide/i);
   assert.match(html, /Created by an NCO for Reserve Soldiers\./i);
+  assert.match(html, />Request, transfer, or maintain ARNet access</i);
   assert.doesNotMatch(html, /Reserve Soldiers and NCOs/i);
   assert.match(html, new RegExp(`${repositoryPath}/_next/`));
   assert.match(html, new RegExp(`${repositoryPath}/favicon\\.svg`));
