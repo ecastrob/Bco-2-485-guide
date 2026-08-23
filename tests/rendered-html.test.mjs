@@ -31,7 +31,10 @@ test("renders the Soldier guide library", async () => {
   assert.match(html, />All Guides</i);
   assert.match(html, />Access and navigate IPPS-A Self-Service</i);
   assert.match(html, />Submit and track an IPPS-A personnel action</i);
-  assert.match(html, />Review and sign an NCOER in EES</i);
+  assert.match(html, />Start and complete your NCOER Support Form — Rated NCO</i);
+  assert.match(html, />Initiate and complete an NCOER — Rater</i);
+  assert.match(html, />Review and sign an NCOER — Rated NCO</i);
+  assert.match(html, />Write strong, honest NCOER comments</i);
   assert.match(html, />Create and submit a DTS authorization</i);
   assert.match(html, />Create and submit a DTS voucher</i);
   assert.match(html, />Start or recertify BAH \(DA Form 5960\)</i);
