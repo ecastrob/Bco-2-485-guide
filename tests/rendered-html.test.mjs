@@ -11,7 +11,7 @@ test("resets the window scroll position when the selected guide changes", async 
 test("provides a Formspree-backed support form without the print action", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /https:\/\/formspree\.io\/f\/mgawbllz/);
-  assert.match(source, /Feedback or Request for B Co Soldier Guide/);
+  assert.match(source, /Feedback or Request for Delta Rays 3-323 Soldier Guide/);
   assert.match(source, /Submit feedback/);
   assert.match(source, /Request a guide or feature/);
   assert.match(source, /name="request_subject"/);
@@ -22,7 +22,8 @@ test("provides a Formspree-backed support form without the print action", async 
 
 test("uses Home as the default landing page without an All Guides directory", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-  assert.match(source, /Welcome to the B Co 2-485 Soldier Guide/);
+  assert.match(source, /Welcome to the Delta Rays 3-323 Soldier Guide/);
+  assert.doesNotMatch(source, /B Co 2-485|B Co Soldier Guide/i);
   assert.match(source, /className=\{activeId \? "home-nav" : "home-nav active"\}/);
   assert.match(source, /hasQuery && <section className="home-results"/);
   assert.doesNotMatch(source, /selectAllGuides|>All Guides<|GUIDE LIBRARY/);
@@ -70,9 +71,9 @@ test("renders the Soldier guide Home page", async () => {
     /^text\/html\b/i,
   );
   const html = await response.text();
-  assert.match(html, /<title>B Co 2-485 Soldier Guide<\/title>/i);
+  assert.match(html, /<title>Delta Rays 3-323 Soldier Guide<\/title>/i);
   assert.match(html, />Home</i);
-  assert.match(html, /Welcome to the B Co 2-485 Soldier Guide/i);
+  assert.match(html, /Welcome to the Delta Rays 3-323 Soldier Guide/i);
   assert.match(html, /Search by task, system, or topic/i);
   assert.match(html, />Set up and access Army AVD</i);
   assert.match(html, /Skip to guide content/i);
@@ -82,6 +83,7 @@ test("renders the Soldier guide Home page", async () => {
   assert.match(html, /not affiliated with, endorsed by, or an official publication/i);
   assert.doesNotMatch(html, />All Guides</i);
   assert.doesNotMatch(html, /GUIDE LIBRARY/i);
+  assert.doesNotMatch(html, /B Co 2-485|B Co Soldier Guide/i);
   assert.doesNotMatch(html, /Draft — pending verification/i);
   assert.doesNotMatch(html, /updated:\s*["']Pending["']/i);
 });

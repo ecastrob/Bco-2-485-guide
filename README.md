@@ -1,4 +1,4 @@
-# B Co 2-485 Soldier Guide
+# Delta Rays 3-323 Soldier Guide
 
 An unofficial, independently created administrative guide for Reserve Soldiers
 and NCOs. The same source supports two hosting targets:
