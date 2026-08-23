@@ -1,8 +1,25 @@
-# vinext-starter
+# B Co 2-485 Soldier Guide
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+An unofficial, independently created administrative guide for Reserve Soldiers
+and NCOs. The same source supports two hosting targets:
+
+- ChatGPT Sites through the existing Vinext/Cloudflare build.
+- GitHub Pages through a separate static Next.js export.
+
+## Dual-deployment commands
+
+- `npm run build`: build the ChatGPT Sites version.
+- `npm run test`: build and test the ChatGPT Sites version.
+- `npm run build:pages`: export the static GitHub Pages version to `out/`.
+- `npm run test:pages`: export and verify the GitHub Pages version.
+
+The GitHub Actions workflow in `.github/workflows/deploy-pages.yml` validates
+both targets before publishing the static export. In the GitHub repository,
+select **Settings → Pages → Source → GitHub Actions** once to enable the free
+Pages URL.
+
+The ChatGPT Sites configuration remains in `.openai/hosting.json`; the GitHub
+Pages build does not replace or modify it.
 
 ## Prerequisites
 
