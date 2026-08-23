@@ -36,3 +36,6 @@
 
 /* Multiple official destinations within a single instruction step */
 .step-links{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:12px}.step-links .official-link{margin-top:0}
+
+/* Clearly separated legacy downloads for older NCOER training material */
+.legacy-sources{border-top:1px solid var(--line);margin-top:25px;padding-top:21px}.legacy-sources h3{font-size:16px;margin:0}.legacy-sources>p{margin:7px 0 14px}.legacy-sources>div{display:grid;gap:10px}.official-sources .legacy-sources a{display:block;background:#fff8d8;border-left:4px solid var(--orange);color:#2f2c24}.legacy-sources a strong,.legacy-sources a small{display:block}.legacy-sources a strong{font-size:14px}.legacy-sources a strong span{float:right;color:#050505}.legacy-sources a small{font-size:12px;line-height:1.45;color:#656057;margin-top:6px;font-weight:400}
