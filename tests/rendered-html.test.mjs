@@ -8,6 +8,19 @@ test("resets the window scroll position when the selected guide changes", async 
   assert.match(source, /\}, \[activeId\]\);/);
 });
 
+test("uses the polished card layout for guide steps", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(source, /className="step-label">STEP \{index \+ 1\}/);
+  assert.match(source, /<strong>EXPECTED RESULT<\/strong>/);
+  assert.match(source, /className="step-expect-icon"/);
+  assert.doesNotMatch(source, /WHAT YOU SHOULD SEE/);
+  assert.match(styles, /\.step\{position:relative;display:grid;grid-template-columns:44px minmax\(0,1fr\)/);
+  assert.match(styles, /\.step-expect\{grid-column:1\/-1/);
+  assert.match(styles, /\.nav-section-button\.section-active\{background:var\(--orange\)/);
+  assert.match(styles, /overflow-wrap:anywhere/);
+});
+
 test("provides a Formspree-backed support form without the print action", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /https:\/\/formspree\.io\/f\/mgawbllz/);
@@ -53,7 +66,7 @@ test("uses the current AESMP and AVS workflow for ARNet access", async () => {
   assert.match(source, /AVS replaced the routine manual DD Form 2875 routing process/);
   assert.match(source, /ATCTS was retired in 2025/);
   assert.doesNotMatch(source, /g6-request-arnet-account-aug-2023\.pdf/);
-  assert.doesNotMatch(source, /Burnett, Stevyn|Jenny Iglesias|2nd Battalion, 485th Regiment|2-485th|TD098/);
+  assert.doesNotMatch(source, /\/resources\/arnet\/|legacyIntro.*ARNet/i);
 });
 
 test("renders the Soldier guide Home page", async () => {
