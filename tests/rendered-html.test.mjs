@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
+
+test("resets the window scroll position when the selected guide changes", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/);
+  assert.match(source, /\}, \[activeId\]\);/);
+});
 
 test("renders the Soldier guide library", async () => {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
