@@ -423,6 +423,9 @@ export default function Home() {
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [activeId]);
 
   return <main className={sidebarCollapsed ? "app-shell sidebar-is-collapsed" : "app-shell"}>
     <a className="skip-link" href="#main-content">Skip to guide content</a>
