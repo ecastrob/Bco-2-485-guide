@@ -427,6 +427,32 @@ const guides: Guide[] = [
   },
 ];
 
+type StructuredInstruction = {
+  lead: string;
+  actions: string[];
+  conditional: string[];
+  warning: string[];
+};
+
+const structureInstruction = (text: string): StructuredInstruction => {
+  const sentences = text
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/g)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  const [lead = text, ...rest] = sentences;
+  const actions: string[] = [];
+  const conditional: string[] = [];
+  const warning: string[] = [];
+
+  for (const sentence of rest) {
+    if (/^(if|when|only if|unless|depending on)\b/i.test(sentence)) conditional.push(sentence);
+    else if (/^(do not|never|avoid|stop)\b/i.test(sentence)) warning.push(sentence);
+    else actions.push(sentence);
+  }
+
+  return { lead, actions, conditional, warning };
+};
+
 export default function Home() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(["access"]);
@@ -549,7 +575,23 @@ export default function Home() {
             <span className="article-eyebrow">HOW-TO GUIDE</span><h1>{active.title}</h1><p className="article-summary">{active.summary}</p>
             <section className={`source-status source-status-${active.status}`} aria-label="Guide source status"><div><span className={`status-pill status-${active.status}`}>{statusDetails[active.status].label}</span>{active.updated !== "Pending" && <small>Sources checked {active.updated}</small>}</div><p>{active.sourceNote ?? "This guide is a working draft. Confirm the process against current official guidance and unit procedures before relying on it."}</p></section>
             <section className="before-card" id="before"><div className="before-title"><span>✓</span><h2>Before you begin</h2></div><div className="before-items">{active.before.map((item) => <div key={item}><span>✓</span>{item}</div>)}</div></section>
-            <section className="steps" id="steps">{active.steps.map((step, index) => <div className="step" key={step.title}><div className="step-number">{index + 1}</div><div className="step-copy"><span className="step-label">STEP {index + 1}</span><h2>{step.title}</h2><p>{step.text}</p>{(step.links ?? (step.link ? [step.link] : [])).length > 0 && <div className="step-links">{(step.links ?? (step.link ? [step.link] : [])).map((link) => <a className="official-link" key={link.label} href={link.href} target="_blank" rel="noreferrer">↗ {link.label}</a>)}</div>}</div>{step.expect ? <div className="step-expect"><span className="step-expect-icon" aria-hidden="true">✓</span><div><strong>EXPECTED RESULT</strong><span>{step.expect}</span></div></div> : <div className="screen-placeholder" aria-label={`Visual pending for step ${index + 1}`}><span>VISUAL PENDING</span><i></i><i></i><i></i></div>}</div>)}</section>
+            <section className="steps" id="steps">{active.steps.map((step, index) => {
+              const instruction = structureInstruction(step.text);
+              return <div className="step" key={step.title}>
+                <div className="step-number">{index + 1}</div>
+                <div className="step-copy">
+                  <span className="step-label">STEP {index + 1}</span>
+                  <h2>{step.title}</h2>
+                  <p className="step-lead">{instruction.lead}</p>
+                  {instruction.actions.length === 1 && <p className="step-supporting">{instruction.actions[0]}</p>}
+                  {instruction.actions.length > 1 && <ol className="step-actions">{instruction.actions.map((action, actionIndex) => <li key={`${action}-${actionIndex}`}>{action}</li>)}</ol>}
+                  {instruction.conditional.length > 0 && <aside className="step-callout step-callout-conditional"><span aria-hidden="true">i</span><div><strong>IF NEEDED</strong>{instruction.conditional.map((sentence, sentenceIndex) => <p key={`${sentence}-${sentenceIndex}`}>{sentence}</p>)}</div></aside>}
+                  {instruction.warning.length > 0 && <aside className="step-callout step-callout-warning"><span aria-hidden="true">!</span><div><strong>IMPORTANT</strong>{instruction.warning.map((sentence, sentenceIndex) => <p key={`${sentence}-${sentenceIndex}`}>{sentence}</p>)}</div></aside>}
+                  {(step.links ?? (step.link ? [step.link] : [])).length > 0 && <div className="step-links">{(step.links ?? (step.link ? [step.link] : [])).map((link) => <a className="official-link" key={link.label} href={link.href} target="_blank" rel="noreferrer">↗ {link.label}</a>)}</div>}
+                </div>
+                {step.expect ? <div className="step-expect"><span className="step-expect-icon" aria-hidden="true">✓</span><div><strong>EXPECTED RESULT</strong><span>{step.expect}</span></div></div> : <div className="screen-placeholder" aria-label={`Visual pending for step ${index + 1}`}><span>VISUAL PENDING</span><i></i><i></i><i></i></div>}
+              </div>;
+            })}</section>
             <section className="problems" id="problems"><div className="problem-heading"><span>!</span><h2>Common problems</h2></div><ul>{active.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></section>
             <section className="official-sources" id="sources"><h2>Official resources</h2>{active.official.length ? <div>{active.official.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span>↗</span></a>)}</div> : <p>Official sources have not yet been attached to this draft. Use current Army and local command guidance before completing the task.</p>}{active.helpful?.length ? <div className="helpful-sources"><h3>Additional help — nonofficial</h3><p>These independent sites can help with troubleshooting, but Army and Microsoft sources take precedence.</p><div>{active.helpful.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span>↗</span></a>)}</div></div> : null}{active.legacy?.length ? <div className="legacy-sources"><h3>Legacy training files</h3><p>These older files are retained for writing and leader-development concepts. They are not current policy; outdated fitness references, links, screenshots, and procedures remain inside them.</p><div>{active.legacy.map((resource) => <a key={resource.label} href={resource.href} download><strong>{resource.label}<span>↓</span></strong><small>{resource.note}</small></a>)}</div></div> : null}</section>
             <footer className="article-footer"><strong>Delta Rays 3-323 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or Delta Rays 3-323. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers. No login is required. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>

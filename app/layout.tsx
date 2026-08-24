@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 const isGitHubPagesBuild = process.env.GITHUB_PAGES === "true";
@@ -15,4 +15,10 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Delta Rays 3-323 Soldier Guide", description: "Administrative, digital-access, and readiness resources.", images: [publicAsset("/og.png")] },
   icons: { icon: publicAsset("/favicon.svg"), shortcut: publicAsset("/favicon.svg") },
 };
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html>; }

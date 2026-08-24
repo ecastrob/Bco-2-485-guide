@@ -8,17 +8,38 @@ test("resets the window scroll position when the selected guide changes", async 
   assert.match(source, /\}, \[activeId\]\);/);
 });
 
+test("keeps mobile content contained without breaking sticky desktop navigation", async () => {
+  const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(layout, /export const viewport: Viewport/);
+  assert.match(layout, /width: "device-width"/);
+  assert.match(layout, /initialScale: 1/);
+  assert.match(styles, /html,body\{max-width:100%\}/);
+  assert.doesNotMatch(styles, /html,body\{[^}]*overflow-x:hidden/);
+  assert.match(styles, /\.app-shell,\.article-shell\{width:100%;min-width:0/);
+  assert.match(styles, /\.sidebar\{align-self:flex-start\}/);
+  assert.match(styles, /\.sidebar\{width:320px;flex:0 0 320px;position:sticky;top:0;height:100vh;overflow-y:auto/);
+  assert.match(styles, /@media\(max-width:980px\)\{\.sidebar,.+\.article-content\{grid-template-columns:minmax\(0,1fr\);gap:0;width:100%;max-width:100%/);
+});
+
 test("uses the polished card layout for guide steps", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(source, /className="step-label">STEP \{index \+ 1\}/);
   assert.match(source, /<strong>EXPECTED RESULT<\/strong>/);
   assert.match(source, /className="step-expect-icon"/);
+  assert.match(source, /const structureInstruction =/);
+  assert.match(source, /className="step-lead"/);
+  assert.match(source, /className="step-actions"/);
+  assert.match(source, /step-callout-conditional/);
+  assert.match(source, /step-callout-warning/);
   assert.doesNotMatch(source, /WHAT YOU SHOULD SEE/);
   assert.match(styles, /\.step\{position:relative;display:grid;grid-template-columns:44px minmax\(0,1fr\)/);
   assert.match(styles, /\.step-expect\{grid-column:1\/-1/);
   assert.match(styles, /\.nav-section-button\.section-active\{background:var\(--orange\)/);
   assert.match(styles, /overflow-wrap:anywhere/);
+  assert.match(styles, /\.step-actions li:before/);
+  assert.match(styles, /\.step-callout-conditional/);
 });
 
 test("provides a Formspree-backed support form without the print action", async () => {
