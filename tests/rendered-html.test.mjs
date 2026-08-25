@@ -73,11 +73,27 @@ test("retains the core MVP guide coverage", async () => {
     "Initiate and complete an NCOER — Rater",
     "Review and sign an NCOER — Rated NCO",
     "Write strong, honest NCOER comments",
+    "Request IDT travel reimbursement",
+    "Request Lodging-in-Kind (LIK)",
     "Create and submit a DTS authorization",
     "Create and submit a DTS voucher",
+    "Create and submit a DTS local voucher",
+    "Complete a Constructed Travel Worksheet",
+    "Correct or supplement a DTS travel claim",
     "Start or recertify BAH (DA Form 5960)",
     "Complete a developmental counseling",
   ]) assert.match(source, new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+});
+
+test("provides current, unit-routed IDT travel and LIK guidance", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /IDT & Travel/);
+  assert.match(source, /IDT-TRP coordinator confirmation of eligibility, funding, deadline, and claim method/i);
+  assert.match(source, /Do not rely on an amount or mileage threshold from an older flyer/);
+  assert.match(source, /Do not book a hotel yourself and assume the unit will reimburse it/);
+  assert.match(source, /DTS Guide 4: Local Vouchers — Aug 2026/);
+  assert.match(source, /The worksheet gives the AO information to authorize a travel mode and establish any reimbursement limit/);
+  assert.match(source, /Do not create a second claim for the same trip or expense/);
 });
 
 test("uses the current AESMP and AVS workflow for ARNet access", async () => {
