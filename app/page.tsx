@@ -574,6 +574,14 @@ const structureInstruction = (text: string): StructuredInstruction => {
   return { lead, actions, conditional, warning };
 };
 
+type AnalyticsParameters = Record<string, string | number | boolean>;
+
+const trackEvent = (name: string, parameters: AnalyticsParameters = {}) => {
+  if (typeof window === "undefined") return;
+  const analyticsWindow = window as Window & { gtag?: (command: "event", eventName: string, values?: AnalyticsParameters) => void };
+  analyticsWindow.gtag?.("event", name, parameters);
+};
+
 export default function Home() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openSections, setOpenSections] = useState<string[]>(["access"]);
@@ -602,10 +610,26 @@ export default function Home() {
     ].join(" ").toLowerCase().includes(search));
   }, [query]);
   const hasQuery = query.trim().length > 0;
-  const selectGuide = (id: string) => { setActiveId(id); setQuery(""); setMenuOpen(false); const section = guides.find((guide) => guide.id === id)?.section; if (section && !openSections.includes(section)) setOpenSections((current) => [...current, section]); };
+  const selectGuide = (id: string) => {
+    const guide = guides.find((item) => item.id === id);
+    setActiveId(id);
+    setQuery("");
+    setMenuOpen(false);
+    if (guide) {
+      const sectionTitle = sections.find((section) => section.id === guide.section)?.title ?? guide.section;
+      trackEvent("guide_open", { guide_id: guide.id, guide_title: guide.title, guide_section: sectionTitle });
+      trackEvent("page_view", {
+        page_title: `${guide.title} — Delta Rays 3-323 Soldier Guide`,
+        page_location: `${window.location.origin}${window.location.pathname}#guide=${guide.id}`,
+        page_path: `${window.location.pathname}#guide=${guide.id}`,
+      });
+      if (!openSections.includes(guide.section)) setOpenSections((current) => [...current, guide.section]);
+    }
+  };
   const selectHome = () => { setActiveId(null); setQuery(""); setMenuOpen(false); };
   const toggleSection = (id: string) => setOpenSections((current) => current.includes(id) ? current.filter((section) => section !== id) : [...current, id]);
   const openSupport = (type: "feedback" | "request") => {
+    trackEvent("support_open", { support_type: type, source_page: active?.title ?? "Home" });
     setSupportType(type);
     setSupportMenuOpen(false);
     setSupportSubject("");
@@ -632,11 +656,13 @@ export default function Home() {
         headers: { Accept: "application/json" },
       });
       if (!response.ok) throw new Error("Submission failed");
+      trackEvent("support_submit", { support_type: supportType ?? "unknown", source_page: active?.title ?? "Home" });
       setSupportStatus("success");
       setSupportSubject("");
       setSupportDetails("");
       setSubmittedBy("");
     } catch {
+      trackEvent("support_error", { support_type: supportType ?? "unknown", source_page: active?.title ?? "Home" });
       setSupportStatus("error");
     }
   };
@@ -667,6 +693,14 @@ export default function Home() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [activeId]);
+  useEffect(() => {
+    const search = query.trim();
+    if (search.length < 2) return;
+    const timer = window.setTimeout(() => {
+      trackEvent("site_search", { query_length: search.length, result_count: searchResults.length });
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [query, searchResults.length]);
 
   return <main className={sidebarCollapsed ? "app-shell sidebar-is-collapsed" : "app-shell"}>
     <a className="skip-link" href="#main-content">Skip to guide content</a>
@@ -715,7 +749,7 @@ export default function Home() {
             })}</section>
             <section className="problems" id="problems"><div className="problem-heading"><span>!</span><h2>Common problems</h2></div><ul>{active.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul></section>
             <section className="official-sources" id="sources"><h2>Official resources</h2>{active.official.length ? <div>{active.official.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span>↗</span></a>)}</div> : <p>Official sources have not yet been attached to this draft. Use current Army and local command guidance before completing the task.</p>}{active.helpful?.length ? <div className="helpful-sources"><h3>Additional help — nonofficial</h3><p>These independent sites can help with troubleshooting, but Army and Microsoft sources take precedence.</p><div>{active.helpful.map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer">{link.label}<span>↗</span></a>)}</div></div> : null}{active.legacy?.length ? <div className="legacy-sources"><h3>Legacy training files</h3><p>These older files are retained for writing and leader-development concepts. They are not current policy; outdated fitness references, links, screenshots, and procedures remain inside them.</p><div>{active.legacy.map((resource) => <a key={resource.label} href={resource.href} download><strong>{resource.label}<span>↓</span></strong><small>{resource.note}</small></a>)}</div></div> : null}</section>
-            <footer className="article-footer"><strong>Delta Rays 3-323 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or Delta Rays 3-323. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers. No login is required. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>
+            <footer className="article-footer"><strong>Delta Rays 3-323 Soldier Guide</strong><p>Independently created, unofficial reference. This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or Delta Rays 3-323. Current Army regulations, official forms, system instructions, and applicable local policy take precedence.</p><small>Created by an NCO for Reserve Soldiers. No login is required. Aggregate site usage is measured with Google Analytics. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>
           </div>
           <aside className="on-page"><strong>ON THIS PAGE</strong><a href="#before">Before you begin</a><a href="#steps">Instructions</a><a href="#problems">Common problems</a><a href="#sources">Sources</a><button onClick={selectHome}>Return home →</button></aside>
         </article> : <article className="home-page">
@@ -725,7 +759,7 @@ export default function Home() {
           <div className="home-stats"><div><strong>{guides.length}</strong><span>available guides</span></div><div><strong>{guides.filter((guide) => guide.status === "source-verified").length}</strong><span>source-verified</span></div><div><strong>No login</strong><span>required</span></div></div>
           <section className="home-disclaimer"><span>i</span><div><strong>Independent project—not an official Army or unit publication</strong><p>Created by an NCO for Reserve Soldiers. Verify requirements against current Army regulations, official forms, system instructions, and applicable local policy.</p></div></section>
           <section className="home-start"><span>◎</span><div><strong>Start with a task</strong><p>Search above or expand a section in the left menu to find the guide you need.</p></div></section>
-          <footer className="article-footer home-footer"><strong>Delta Rays 3-323 Soldier Guide</strong><p>This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or Delta Rays 3-323.</p><small>No login is required. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>
+          <footer className="article-footer home-footer"><strong>Delta Rays 3-323 Soldier Guide</strong><p>This site is not affiliated with, endorsed by, or an official publication of the Department of the Army or Delta Rays 3-323.</p><small>No login is required. Aggregate site usage is measured with Google Analytics. Optional support submissions are processed through Formspree; do not include PII, CUI, medical, financial, or operationally sensitive information.</small></footer>
         </article>}
     </section>
     {supportType && <div className="support-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeSupport(); }}><section className="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-dialog-title"><button className="support-close" type="button" onClick={closeSupport} aria-label="Close support form">×</button><div className="support-modal-content">{supportStatus === "success" ? <div className="support-success" role="status"><span aria-hidden="true">✓</span><h2 id="support-dialog-title">Submission received</h2><p>Thank you. Your {supportType === "feedback" ? "feedback" : "request"} was sent successfully.</p><button type="button" onClick={closeSupport}>Close</button></div> : <><span className="support-eyebrow">SUPPORT</span><h2 id="support-dialog-title">{supportType === "feedback" ? "Submit feedback" : "Request a guide or feature"}</h2><p className="support-intro">Help improve the Soldier Guide. Do not submit PII, CUI, medical, financial, or operationally sensitive information.</p><form onSubmit={submitSupport}><input type="hidden" name="subject" value="Feedback or Request for Delta Rays 3-323 Soldier Guide" /><input className="support-honeypot" type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" /><label>Subject<input ref={supportSubjectRef} type="text" name="request_subject" value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} maxLength={120} required placeholder={supportType === "feedback" ? "What is your feedback about?" : "What would you like added?"} /></label><label>Details<textarea name="details" value={supportDetails} onChange={(event) => setSupportDetails(event.target.value)} maxLength={2500} required rows={7} placeholder="Describe your feedback or request. Include the guide name or task when applicable." /></label><label>Submitted by<input type="text" name="submitted_by" value={submittedBy} onChange={(event) => setSubmittedBy(event.target.value)} maxLength={80} required placeholder="Name or identifier" /></label>{supportStatus === "error" && <p className="support-error" role="alert">The submission could not be sent. Check your connection and try again.</p>}<div className="support-form-actions"><button className="support-cancel" type="button" onClick={closeSupport} disabled={supportStatus === "submitting"}>Cancel</button><button className="support-submit" type="submit" disabled={supportStatus === "submitting"}>{supportStatus === "submitting" ? "Sending…" : "Submit"}</button></div></form></>}</div></section></div>}

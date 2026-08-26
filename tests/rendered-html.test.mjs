@@ -54,6 +54,20 @@ test("provides a Formspree-backed support form without the print action", async 
   assert.doesNotMatch(source, /window\.print/);
 });
 
+test("installs privacy-conscious Google Analytics tracking", async () => {
+  const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(layout, /G-ZYXG181TKD/);
+  assert.match(layout, /googletagmanager\.com\/gtag\/js/);
+  assert.match(layout, /anonymize_ip:true/);
+  assert.match(source, /trackEvent\("guide_open"/);
+  assert.match(source, /trackEvent\("page_view"/);
+  assert.match(source, /trackEvent\("site_search", \{ query_length: search\.length, result_count: searchResults\.length \}\)/);
+  assert.match(source, /trackEvent\("support_submit"/);
+  assert.doesNotMatch(source, /trackEvent\("site_search"[^\n]*query:/);
+  assert.match(source, /Aggregate site usage is measured with Google Analytics/);
+});
+
 test("uses Home as the default landing page without an All Guides directory", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /Welcome to the Delta Rays 3-323 Soldier Guide/);

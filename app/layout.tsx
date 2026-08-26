@@ -6,6 +6,7 @@ const repositoryName = process.env.GITHUB_REPOSITORY?.split("/").at(-1) ?? "Bco-
 const basePath = isGitHubPagesBuild ? `/${repositoryName}` : "";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://soldier-admin-guide.eliancastro990.chatgpt.site";
 const publicAsset = (path: string) => `${basePath}${path}`;
+const googleAnalyticsId = "G-ZYXG181TKD";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -21,4 +22,12 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html>; }
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en">
+    <head>
+      <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>
+      <script dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}',{anonymize_ip:true});` }}></script>
+    </head>
+    <body>{children}</body>
+  </html>;
+}
