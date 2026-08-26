@@ -110,6 +110,23 @@ test("provides current, unit-routed IDT travel and LIK guidance", async () => {
   assert.match(source, /Do not create a second claim for the same trip or expense/);
 });
 
+test("provides a source-verified Pay and Personnel rollout", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /Pay & Personnel/);
+  for (const title of [
+    "Read and verify your Reserve LES",
+    "Report missing or incorrect Reserve pay",
+    "Update DD Form 93 and SGLI beneficiaries",
+    "Review and correct your Army records",
+    "Update direct deposit and tax withholding in myPay",
+    "Start or recertify BAH (DA Form 5960)",
+  ]) assert.ok(source.includes(title), `missing guide: ${title}`);
+  assert.match(source, /DD Form 93 and SGLI are separate records in separate systems/);
+  assert.match(source, /Soldiers cannot upload documents directly into their own iPERMS record/);
+  assert.match(source, /Never enter SSN, bank-account data, LES details, or attachments into this public website/);
+  assert.match(source, /section: "pay"/);
+});
+
 test("uses the current AESMP and AVS workflow for ARNet access", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /Request, transfer, or maintain ARNet access/);
