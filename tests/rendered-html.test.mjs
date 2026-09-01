@@ -142,6 +142,7 @@ test("provides source-verified Army AWS WickrGov onboarding", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /Set up and use Army AWS WickrGov/);
   assert.match(source, /https:\/\/go\.army\.mil\/wickr-onboard/);
+  assert.match(source, /army_nears_100000_wickr_users_as_secure_communications_platform_expands_across_the_force/);
   assert.match(source, /Install AWS WickrGov—not the commercial Wickr app/);
   assert.match(source, /use your @army\.mil email address/);
   assert.match(source, /Message expiration or burn-on-read does not cancel official records-retention obligations/);
