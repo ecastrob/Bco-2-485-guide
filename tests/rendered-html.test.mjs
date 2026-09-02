@@ -42,6 +42,12 @@ test("uses the polished card layout for guide steps", async () => {
   assert.match(styles, /\.step-callout-conditional/);
 });
 
+test("aligns the Before you begin checklist without row dividers", async () => {
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(styles, /\.before-items>div\{display:grid;grid-template-columns:19px minmax\(0,1fr\);gap:10px;align-items:start;[^}]*border:0/);
+  assert.match(styles, /\.before-items>div,\.before-items>div:first-child,\.before-items>div:last-child\{padding:0;border:0\}/);
+});
+
 test("provides a Formspree-backed support form without the print action", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(source, /https:\/\/formspree\.io\/f\/mgawbllz/);
@@ -145,6 +151,10 @@ test("provides source-verified Army AWS WickrGov onboarding", async () => {
   assert.match(source, /army_nears_100000_wickr_users_as_secure_communications_platform_expands_across_the_force/);
   assert.match(source, /Install AWS WickrGov—not the commercial Wickr app/);
   assert.match(source, /use your @army\.mil email address/);
+  assert.match(source, /Create a password that satisfies every displayed rule/);
+  assert.match(source, /minimum counts of lowercase letters, uppercase letters, numbers, and special characters/);
+  assert.match(source, /AWS's platform default is only eight characters, but that is not proof of the Army network's current policy/);
+  assert.match(source, /a password reset is a full account reset that deletes local message history, removes room memberships, and clears registered devices/);
   assert.match(source, /Message expiration or burn-on-read does not cancel official records-retention obligations/);
   assert.match(source, /section: "access"/);
 });
