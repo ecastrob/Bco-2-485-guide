@@ -129,6 +129,11 @@ test("provides a source-verified Pay and Personnel rollout", async () => {
     "Start or recertify BAH (DA Form 5960)",
   ]) assert.ok(source.includes(title), `missing guide: ${title}`);
   assert.match(source, /DD Form 93 and SGLI are separate records in separate systems/);
+  assert.match(source, /Designated Person identifies someone outside the primary next of kin or immediate family/);
+  assert.match(source, /PADD—Person Authorized to Direct Disposition/);
+  assert.match(source, /SGLI proceeds cannot be paid directly to a minor/);
+  assert.match(source, /court-appointed guardian of the child's estate/);
+  assert.match(source, /Typing a trust into SOES does not create one/);
   assert.match(source, /Soldiers cannot upload documents directly into their own iPERMS record/);
   assert.match(source, /Never enter SSN, bank-account data, LES details, or attachments into this public website/);
   assert.match(source, /section: "pay"/);
