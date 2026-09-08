@@ -87,6 +87,7 @@ test("retains the core MVP guide coverage", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   for (const title of [
     "Request, transfer, or maintain ARNet access",
+    "Set up Army Hypori on a mobile device",
     "Set up and use Army AWS WickrGov",
     "Access and navigate IPPS-A Self-Service",
     "Submit and track an IPPS-A personnel action",
@@ -147,6 +148,18 @@ test("uses the current AESMP and AVS workflow for ARNet access", async () => {
   assert.match(source, /ATCTS was retired in 2025/);
   assert.doesNotMatch(source, /g6-request-arnet-account-aug-2023\.pdf/);
   assert.doesNotMatch(source, /\/resources\/arnet\/|legacyIntro.*ARNet/i);
+});
+
+test("provides source-verified Army Hypori enrollment guidance", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /Set up Army Hypori on a mobile device/);
+  assert.match(source, /https:\/\/mobileconnect\.us\.army\.mil/);
+  assert.match(source, /required eight-digit MobileConnect passcode/);
+  assert.match(source, /Add 2nd Factor Account/);
+  assert.match(source, /six-digit authentication code that refreshes every 30 seconds/);
+  assert.match(source, /Purebred PIV Authentication certificate/);
+  assert.match(source, /Hypori Support at 1-833-638-9202/);
+  assert.match(source, /section: "access"/);
 });
 
 test("provides source-verified Army AWS WickrGov onboarding", async () => {
